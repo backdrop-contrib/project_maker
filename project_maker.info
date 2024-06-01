@@ -1,0 +1,7 @@
+name = Project maker
+description = Generates essential files for making a Backdrop theme, subtheme, module or layout.
+package = Development
+backdrop = 1.x
+type = module
+
+configure = admin/config/development/project-maker
