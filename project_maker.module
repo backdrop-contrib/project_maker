@@ -147,7 +147,7 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['create_module'] = array(
     '#type' => 'submit',
-    // '#validate' => array('project_maker_create_module_form_validate'),
+    '#validate' => array('project_maker_create_module_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
     '#value' => t('Create module'),
   );
@@ -317,7 +317,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['create_subtheme'] = array(
     '#type' => 'submit',
-    '#validate' => array('project_maker_create_module_form_validate'),
+    '#validate' => array('project_maker_create_theme_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
     '#value' => t('Create subtheme'),
   );
@@ -381,7 +381,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['create_subtheme'] = array(
     '#type' => 'submit',
-    //'#validate' => array('project_maker_create_module_form_validate'),
+    '#validate' => array('project_maker_create_layout_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
     '#value' => t('Create layout template'),
   );
@@ -416,6 +416,25 @@ function project_maker_project_exists($theme_name) {
  * Validation handler for the subtheme creation form.
  */
 function project_maker_create_module_form_validate($form, &$form_state) {
+  dpm($form_state['values']);
+  if ($form_state['values']['include_options']['css']) {
+    $form_state['values']['styles'][] = 'css/' . $form_state['values']['project_name'] . '.css';
+  }
+  if ($form_state['values']['include_options']['js']) {
+    $form_state['values']['scripts'][] = 'js/' . $form_state['values']['project_name'] . '.js';
+  }
+}
+
+/**
+ * Validation handler for the subtheme creation form.
+ */
+function project_maker_create_layout_form_validate($form, &$form_state) {
+}
+
+/**
+ * Validation handler for the subtheme creation form.
+ */
+function project_maker_create_theme_form_validate($form, &$form_state) {
   // @Todo: Need sanitizing?
   if (!empty($form_state['values']['styles'])) {
     $styles = explode("\n", $form_state['values']['styles']);
@@ -447,6 +466,7 @@ function project_maker_create_module_form_validate($form, &$form_state) {
     }
     $form_state['values']['scripts'] = $scripts;
   }
+  dpm($form_state['values']);
 }
 
 /**
@@ -481,6 +501,18 @@ function project_maker_process_project_directory($form_state, $project_name) {
     return FALSE;
   }
 
+  // Build the info file.
+  $values['theme_name'] = $project_name;
+  $info_file_array = project_maker_build_info_file_array($values);
+
+  $info_file = project_maker_build_info_file($info_file_array);
+  $info_file_path = $new_dirname . '/' . $values['project_name'] . '.info';
+  if (file_put_contents($info_file_path, $info_file) === FALSE) {
+    backdrop_set_message(t('The info file could not be written.'), 'error');
+    backdrop_rmdir($new_dirname);
+    return FALSE;
+  }
+
   // Create CSS and JS folders.
   if (!empty($values['styles'])) {
     foreach ($values['styles'] as $style) {
@@ -498,15 +530,6 @@ function project_maker_process_project_directory($form_state, $project_name) {
       file_put_contents($new_dirname . '/' . $script, '');
     }
   }
-  
-
-  // Build the info file.
-  $values['theme_name'] = $project_name;
-  $info_file_array = project_maker_build_info_file_array($values);
-
-  $info_file = project_maker_build_info_file($info_file_array);
-  $info_file_path = $new_dirname . '/' . $values['project_name'] . '.info';
-  file_put_contents($info_file_path, $info_file);
 
   return TRUE;
 
@@ -728,7 +751,7 @@ function project_maker_build_info_file_array($values) {
   }
   $info_file_array['newline2'] = 'newline';
 
-  if (!empty($values['styles'])) {
+  if (!empty($values['scripts'])) {
     $info_file_array['scripts'] = $values['scripts'];
   }
   $info_file_array['newline3'] = 'newline';
