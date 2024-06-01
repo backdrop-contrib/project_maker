@@ -40,15 +40,6 @@ function project_maker_menu() {
     'access arguments' => array('administer project maker'),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/config/development/project-maker/subtheme'] = array(
-    'title' => 'Create subtheme',
-    'description' => 'Create project.',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('project_maker_create_theme_form'),
-    'access arguments' => array('administer project maker'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 10,
-  );
   $items['admin/config/development/project-maker/layout'] = array(
     'title' => 'Create layout',
     'description' => 'Create project.',
@@ -65,7 +56,6 @@ function project_maker_menu() {
  * Form builder for the project maker creation form.
  */
 function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
-  dpm('module');
   $form['#tree'] = FALSE;
 
   $form['intro'] = array(
@@ -169,30 +159,43 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
  * Form builder for the project maker creation form.
  */
 function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
-  dpm('theme');
   $form['#tree'] = FALSE;
   $themes = system_rebuild_theme_data();
-  $page_title = t('Create project');
+  $page_title = t('Create theme');
   $hide_theme_selection = FALSE;
 
   $options = array();
+  $options['new'] = t('No base theme');
   foreach ($themes as $theme_name => $theme_info) {
     $options[$theme_name] = $theme_info->info['name'];
   }
 
-  $default = 'basis';
+  $form_state['theme_name'] = 'new';
   if (isset($form_state['values']['base_theme'])) {
-    $default = $form_state['values']['base_theme'];
+    $form_state['theme_name'] = $form_state['values']['base_theme'];
   }
   elseif ($theme) {
-    $default = $theme;
+    $form_state['theme_name'] = $theme;
     $page_title = t('Create subtheme from @theme', array('@theme' => $options[$theme]));
     $hide_theme_selection = TRUE;
   }
-  $form_state['theme_name'] = $default;
   $form_state['themes'] = $themes;
 
+  
+  $selected_theme_name_string = '';
+  if ($form_state['theme_name']!= 'new') {
+    $form_state['theme_name'] = $form_state['values']['base_theme'];
+    $selected_theme = $themes[$form_state['theme_name']];
+    $selected_theme_name = $selected_theme->info['name'];
+    $selected_theme_name_string = t(' from @selected_theme_name', array('@selected_theme_name' => $selected_theme_name));
+  }
+
   backdrop_set_title($page_title);
+
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => 'theme',
+  );
 
   $form['intro'] = array(
     '#type' => 'help',
@@ -201,17 +204,17 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
 
   $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('Subtheme name'),
+    '#title' => t('Theme name'),
     '#maxlength' => 64,
     '#description' => t('Human-readable subtheme name.'),
     '#required' => TRUE,
     '#id' => 'subtheme-name',
   );
-  $form['subtheme_name'] = array(
+  $form['project_name'] = array(
     '#type' => 'machine_name',
     '#maxlength' => 128,
     '#machine_name' => array(
-      'exists' => 'project_maker_theme_exists',
+      'exists' => 'project_maker_project_exists',
       'source' => array('name'),
     ),
     '#description' => t('Subtheme machine name'),
@@ -219,7 +222,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   if ($hide_theme_selection) {
     $form['base_theme'] = array(
       '#type' => 'hidden',
-      '#value' => $default,
+      '#value' => $form_state['theme_name'],
     );
   }
   else {
@@ -228,7 +231,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
       '#title' => t('Base theme'),
       '#options' => $options,
       '#parents' => array('base_theme'),
-      '#default_value' => $default,
+      '#default_value' => $form_state['theme_name'],
       '#ajax' => array(
         'callback' => 'base_theme_wrapper_change_callback',
         'wrapper' => 'base_theme_wrapper',
@@ -241,42 +244,63 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   $form['base_theme_wrapper'] = array(
     '#type' => 'container',
     '#id' => 'base_theme_wrapper',
+   // '#access' => $form_state['theme_name'],
     '#attributes' => array(
       'class' => array('base-theme-wrapper clearfix'),
     ),
   );
-  if (theme_has_color_support($default)) {
+  if ($form_state['theme_name'] !== 'new' && theme_has_color_support($form_state['theme_name'])) {
     $form['base_theme_wrapper']['copy_color'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Copy color settings'),
+    '#title' => t('Copy color settings') . $selected_theme_name_string,
     '#description' => t('Include this if you plan to modify the color module settings.'),
     );
   }
-  if (!empty($themes[$default]->info['settings'])) {
+  if (!empty($themes[$form_state['theme_name']]->info['settings'])) {
     $form['base_theme_wrapper']['copy_settings'] = array(
     '#type' => 'checkbox',
     '#parent' => 'settings',
-    '#title' => t('Copy theme settings'),
+    '#title' => t('Copy theme settings') . $selected_theme_name_string,
     );
   }
-  $form['base_theme_wrapper']['copy_template_php'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Create blank template.php'),
-    '#parent' => 'copy_template_php',
-    '#description' => t('Useful if you plan to include any custom php in your subtheme.'),
-  );
 
-  $template_list = project_maker_theme_templates($default);
+  $template_list = project_maker_theme_templates($form_state['theme_name']);
 
   if (!empty($template_list)) {
     $form['base_theme_wrapper']['template_list'] = array(
       '#type' => 'checkboxes',
       '#options' => $template_list,
-      '#title' => t('Copy template files'),
+      '#title' => t('Copy template files') . $selected_theme_name_string,
       '#parent' => 'template_list',
       '#description' => t('Now is a good time to add any template files you know you will be editing, or you can add them manually later.'),
     );
   }
+
+  if ($form_state['theme_name'] === 'new') {
+    $form['base_theme_wrapper']['template_files'] = array(
+      '#type' => 'checkboxes',
+      '#options' => array(
+        'node' => t('node.tpl.php'),
+        'comment' => t('comment.tpl.php'),
+        'header' => t('header.tpl.php'),
+        'maintenance-page' => t('maintenance-page.tpl.php'),
+      ),
+      '#title' => t('Create template files'),
+      '#parent' => 'template_list',
+      '#description' => t('Select template files to create now, or you can add them manually later.'),
+    );
+    $form['base_theme_wrapper']['copy_theme_settings_php'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Create blank theme-settings.php'),
+      '#description' => t('Useful if you plan to include any custom settings for your theme.'),
+    );
+  }
+  $form['copy_template_php'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Create blank template.php'),
+    '#parent' => 'copy_template_php',
+    '#description' => t('Useful if you plan to include any custom php in your theme.'),
+  );
   $form['styles'] = array(
     '#type' => 'textarea',
     '#title' => t('Add stylesheet paths'),
@@ -305,7 +329,11 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
  * Form builder for the project maker creation form.
  */
 function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
-  dpm('layout');
+
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => 'layout',
+  );
 
   $form['intro'] = array(
     '#type' => 'help',
@@ -320,7 +348,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
     '#required' => TRUE,
     '#id' => 'layout-name',
   );
-  $form['layout_name'] = array(
+  $form['project_name'] = array(
     '#type' => 'machine_name',
     '#maxlength' => 128,
     '#machine_name' => array(
@@ -353,7 +381,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['create_subtheme'] = array(
     '#type' => 'submit',
-    '#validate' => array('project_maker_create_module_form_validate'),
+    //'#validate' => array('project_maker_create_module_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
     '#value' => t('Create layout template'),
   );
