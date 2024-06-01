@@ -67,131 +67,99 @@ function project_maker_menu() {
 function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
   dpm('module');
   $form['#tree'] = FALSE;
-  $themes = system_rebuild_theme_data();
-  $page_title = t('Create project');
-  $hide_theme_selection = FALSE;
-
-  $options = array();
-  foreach ($themes as $theme_name => $theme_info) {
-    $options[$theme_name] = $theme_info->info['name'];
-  }
-
-  $default = 'basis';
-  if (isset($form_state['values']['base_theme'])) {
-    $default = $form_state['values']['base_theme'];
-  }
-  elseif ($theme) {
-    $default = $theme;
-    $page_title = t('Create subtheme from @theme', array('@theme' => $options[$theme]));
-    $hide_theme_selection = TRUE;
-  }
-  $form_state['theme_name'] = $default;
-  $form_state['themes'] = $themes;
-
-  backdrop_set_title($page_title);
 
   $form['intro'] = array(
     '#type' => 'help',
-    '#markup' => t('This form automates the initial creation of a subtheme. A new folder will be created in your themes directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
+    '#markup' => t('This form automates the initial creation of a module package. A new folder will be created in your modules directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a module</a>.', array('@link' => url('https://docs.backdropcms.org/creating-modules'))),
   );
 
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => 'module',
+  );
   $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('Subtheme name'),
+    '#title' => t('Module name'),
     '#maxlength' => 64,
-    '#description' => t('Human-readable subtheme name.'),
+    '#description' => t('Human-readable module name.'),
     '#required' => TRUE,
-    '#id' => 'subtheme-name',
+    '#id' => 'module-name',
   );
-  $form['subtheme_name'] = array(
+  $form['project_name'] = array(
     '#type' => 'machine_name',
     '#maxlength' => 128,
     '#machine_name' => array(
-      'exists' => 'project_maker_theme_exists',
+      'exists' => 'project_maker_project_exists',
       'source' => array('name'),
     ),
-    '#description' => t('Subtheme machine name'),
+    '#description' => t('Module machine name'),
   );
-  if ($hide_theme_selection) {
-    $form['base_theme'] = array(
-      '#type' => 'hidden',
-      '#value' => $default,
-    );
-  }
-  else {
-    $form['base_theme'] = array(
-      '#type' => 'select',
-      '#title' => t('Base theme'),
-      '#options' => $options,
-      '#parents' => array('base_theme'),
-      '#default_value' => $default,
-      '#ajax' => array(
-        'callback' => 'base_theme_wrapper_change_callback',
-        'wrapper' => 'base_theme_wrapper',
-        'event' => 'change',
-        'method' => 'replace',
-        'effect' => 'fade',
-      ),
-    );
-  }
-  $form['base_theme_wrapper'] = array(
-    '#type' => 'container',
-    '#id' => 'base_theme_wrapper',
-    '#attributes' => array(
-      'class' => array('base-theme-wrapper clearfix'),
+  $form['base_theme_wrapper']['include_common_hooks'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Implement Hooks'),
+    '#options' => array(
+      'hook_menu' => t('hook_menu()'),
+      'hook_permission' => t('hook_permission()'),
+      'hook_theme' => t('hook_theme()'),
+      'hook_autoload_info' => t('hook_autoload_info()'),
+      'hook_config_info' => t('hook_config_info()'),
+      'hook_admin_paths' => t('hook_admin_paths()'),
+      'hook_block_configure' => t('hook_block_configure()'),
+      'hook_block_info' => t('hook_block_info()'),
+      'hook_block_save' => t('hook_block_save()'),
+      'hook_block_view' => t('hook_block_view()'),
+      'hook_cron' => t('hook_cron()'),
+      'hook_entity_info' => t('hook_entity_info()'),
+      'hook_form_FORM_ID_alter' => t('hook_form_FORM_ID_alter()'),
+      'hook_form_alter' => t('hook_form_alter()'),
+      'hook_library_info' => t('hook_library_info()'),
     ),
-  );
-  if (theme_has_color_support($default)) {
-    $form['base_theme_wrapper']['copy_color'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Copy color settings'),
-    '#description' => t('Include this if you plan to modify the color module settings.'),
-    );
-  }
-  if (!empty($themes[$default]->info['settings'])) {
-    $form['base_theme_wrapper']['copy_settings'] = array(
-    '#type' => 'checkbox',
-    '#parent' => 'settings',
-    '#title' => t('Copy theme settings'),
-    );
-  }
-  $form['base_theme_wrapper']['copy_template_php'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Create blank template.php'),
-    '#parent' => 'copy_template_php',
-    '#description' => t('Useful if you plan to include any custom php in your subtheme.'),
+    '#description' => t('Choose additional module files to be created.'),
   );
 
-  $template_list = project_maker_theme_templates($default);
+  $form['base_theme_wrapper']['include_options'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Create additional files and folders'),
+    '#options' => array(
+      'install' => t('Install file'),
+      'admin' => t('Admin file'),
+      'theme' => t('Theme file'),
+      'config' => t('Config file'),
+      'theme' => t('Theme file'),
+      'js' => t('Javascript (js) file'),
+      'css' => t('CSS file'),
+      'test' => t('Test file'),
+    ),
+    '#description' => t('Choose additional module files to be created.'),
+  );
+  $form['base_theme_wrapper']['include_install_hooks'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Implement Hooks in Install file'),
+    '#options' => array(
+      'hook_enable' => t('hook_enable()'),
+      'hook_disable' => t('hook_disable()'),
+      'hook_install' => t('hook_install()'),
+      'hook_schema' => t('hook_schema()'),
+      'hook_uninstall' => t('hook_uninstall()'),
+    ),
+    '#description' => t('Choose additional module files to be created.'),
+  );
 
-  if (!empty($template_list)) {
-    $form['base_theme_wrapper']['template_list'] = array(
-      '#type' => 'checkboxes',
-      '#options' => $template_list,
-      '#title' => t('Copy template files'),
-      '#parent' => 'template_list',
-      '#description' => t('Now is a good time to add any template files you know you will be editing, or you can add them manually later.'),
-    );
-  }
-  $form['styles'] = array(
+
+  $form['custom_functions'] = array(
     '#type' => 'textarea',
-    '#title' => t('Add stylesheet paths'),
-    '#description' => t('Enter relative paths, one per line. A blank CSS file will be created at this path. For example <em>css/custom.css</em> (file placed in a "css" folder) or <em>style.css</em> (file placed in root).'),
+    '#title' => t('Create custom functions'),
+    '#description' => t('Enter custom function names, one per line. Module name will be prefixed automatically. For example <em>create_widget</em>  will be converted to <em>MODULE_NAME_create_widget</em>.'),
     '#rows' => 3,
-    '#default_value' => 'css/custom.css',
+    '#default_value' => '',
   );
-  $form['scripts'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Add script paths'),
-    '#description' => t('Enter relative paths, one per line. A blank JS file will be created at this path. For example <em>js/scripts.js</em> (file placed in a "js" folder) or <em>js-scripts.js</em> (file placed in root).'),
-    '#rows' => 3,
-  );
+
   $form['actions'] = array('#type' => 'actions');
-  $form['actions']['create_subtheme'] = array(
+  $form['actions']['create_module'] = array(
     '#type' => 'submit',
-    '#validate' => array('project_maker_create_module_form_validate'),
-    '#submit' => array('project_maker_create_module_form_submit'),
-    '#value' => t('Create subtheme'),
+    // '#validate' => array('project_maker_create_module_form_validate'),
+    '#submit' => array('project_maker_create_project_form_submit'),
+    '#value' => t('Create module'),
   );
 
   return $form;
@@ -326,7 +294,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   $form['actions']['create_subtheme'] = array(
     '#type' => 'submit',
     '#validate' => array('project_maker_create_module_form_validate'),
-    '#submit' => array('project_maker_create_module_form_submit'),
+    '#submit' => array('project_maker_create_project_form_submit'),
     '#value' => t('Create subtheme'),
   );
 
@@ -338,132 +306,56 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
  */
 function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
   dpm('layout');
-  $form['#tree'] = FALSE;
-  $themes = system_rebuild_theme_data();
-  $page_title = t('Create project');
-  $hide_theme_selection = FALSE;
-
-  $options = array();
-  foreach ($themes as $theme_name => $theme_info) {
-    $options[$theme_name] = $theme_info->info['name'];
-  }
-
-  $default = 'basis';
-  if (isset($form_state['values']['base_theme'])) {
-    $default = $form_state['values']['base_theme'];
-  }
-  elseif ($theme) {
-    $default = $theme;
-    $page_title = t('Create subtheme from @theme', array('@theme' => $options[$theme]));
-    $hide_theme_selection = TRUE;
-  }
-  $form_state['theme_name'] = $default;
-  $form_state['themes'] = $themes;
-
-  backdrop_set_title($page_title);
 
   $form['intro'] = array(
     '#type' => 'help',
-    '#markup' => t('This form automates the initial creation of a subtheme. A new folder will be created in your themes directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
+    '#markup' => t('This form automates the initial creation of a layout template package. A new folder will be created in your layouts directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
   );
 
   $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => t('Subtheme name'),
+    '#title' => t('Layout name'),
     '#maxlength' => 64,
-    '#description' => t('Human-readable subtheme name.'),
+    '#description' => t('Human-readable layout name.'),
     '#required' => TRUE,
-    '#id' => 'subtheme-name',
+    '#id' => 'layout-name',
   );
-  $form['subtheme_name'] = array(
+  $form['layout_name'] = array(
     '#type' => 'machine_name',
     '#maxlength' => 128,
     '#machine_name' => array(
-      'exists' => 'project_maker_theme_exists',
+      'exists' => 'project_maker_project_exists',
       'source' => array('name'),
     ),
     '#description' => t('Subtheme machine name'),
   );
-  if ($hide_theme_selection) {
-    $form['base_theme'] = array(
-      '#type' => 'hidden',
-      '#value' => $default,
-    );
+
+
+  $templates = layout_get_layout_template_info();
+  $template_list = array();
+  $template_list['blank'] = t('Blank');
+  foreach ($templates as $key => $list) {
+    if (empty($list['flexible']) && !$list['hidden'] && !empty($list['template'])) {
+      $template_list[$key] = theme('layout_template_info', array('template_info' => $list));
+    }
   }
-  else {
-    $form['base_theme'] = array(
-      '#type' => 'select',
-      '#title' => t('Base theme'),
-      '#options' => $options,
-      '#parents' => array('base_theme'),
-      '#default_value' => $default,
-      '#ajax' => array(
-        'callback' => 'base_theme_wrapper_change_callback',
-        'wrapper' => 'base_theme_wrapper',
-        'event' => 'change',
-        'method' => 'replace',
-        'effect' => 'fade',
-      ),
-    );
-  }
-  $form['base_theme_wrapper'] = array(
-    '#type' => 'container',
-    '#id' => 'base_theme_wrapper',
-    '#attributes' => array(
-      'class' => array('base-theme-wrapper clearfix'),
-    ),
-  );
-  if (theme_has_color_support($default)) {
-    $form['base_theme_wrapper']['copy_color'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Copy color settings'),
-    '#description' => t('Include this if you plan to modify the color module settings.'),
-    );
-  }
-  if (!empty($themes[$default]->info['settings'])) {
-    $form['base_theme_wrapper']['copy_settings'] = array(
-    '#type' => 'checkbox',
-    '#parent' => 'settings',
-    '#title' => t('Copy theme settings'),
-    );
-  }
-  $form['base_theme_wrapper']['copy_template_php'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Create blank template.php'),
-    '#parent' => 'copy_template_php',
-    '#description' => t('Useful if you plan to include any custom php in your subtheme.'),
+
+  $form['#attached']['css'][] = backdrop_get_path('module', 'layout') . '/css/layout.admin.css';
+  $form['base_theme_wrapper']['template_list'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $template_list,
+    '#title' => t('Copy template files'),
+    '#attributes' => array('class' => array('layout-list')),
+    '#description' => t('The template (*.tpl.php) files will be copied from the existing layout template selected.'),
   );
 
-  $template_list = project_maker_theme_templates($default);
 
-  if (!empty($template_list)) {
-    $form['base_theme_wrapper']['template_list'] = array(
-      '#type' => 'checkboxes',
-      '#options' => $template_list,
-      '#title' => t('Copy template files'),
-      '#parent' => 'template_list',
-      '#description' => t('Now is a good time to add any template files you know you will be editing, or you can add them manually later.'),
-    );
-  }
-  $form['styles'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Add stylesheet paths'),
-    '#description' => t('Enter relative paths, one per line. A blank CSS file will be created at this path. For example <em>css/custom.css</em> (file placed in a "css" folder) or <em>style.css</em> (file placed in root).'),
-    '#rows' => 3,
-    '#default_value' => 'css/custom.css',
-  );
-  $form['scripts'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Add script paths'),
-    '#description' => t('Enter relative paths, one per line. A blank JS file will be created at this path. For example <em>js/scripts.js</em> (file placed in a "js" folder) or <em>js-scripts.js</em> (file placed in root).'),
-    '#rows' => 3,
-  );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['create_subtheme'] = array(
     '#type' => 'submit',
     '#validate' => array('project_maker_create_module_form_validate'),
-    '#submit' => array('project_maker_create_module_form_submit'),
-    '#value' => t('Create subtheme'),
+    '#submit' => array('project_maker_create_project_form_submit'),
+    '#value' => t('Create layout template'),
   );
 
   return $form;
@@ -487,7 +379,7 @@ function project_maker_theme_templates($theme_name) {
     
 }
 
-function project_maker_theme_exists($theme_name) {
+function project_maker_project_exists($theme_name) {
   $themes = list_themes();
   return isset($themes[$theme_name]);
 }
@@ -532,16 +424,66 @@ function project_maker_create_module_form_validate($form, &$form_state) {
 /**
  * Submit handler for the subtheme creation form.
  */
-function project_maker_create_module_form_submit($form, &$form_state) {
-  $success = project_maker_process_theme_directory($form_state);
+function project_maker_create_project_form_submit($form, &$form_state) {
+  $module_name = check_plain($form_state['values']['project_name']);
+  $success = project_maker_process_project_directory($form_state, $module_name);
   if ($success) {
     backdrop_set_message(t('Subtheme %subtheme was created successfully.', array('%subtheme' => $form_state['values']['name'])));
-    $form_state['redirect'] = 'admin/appearance';
+    // $form_state['redirect'] = 'admin/appearance';
   }
   else {
     backdrop_set_message(t('Subtheme creation failed to complete.'), 'error');
   }
 }
+
+/**
+ * Converts files in a theme directory.
+ */
+function project_maker_process_project_directory($form_state, $project_name) {
+  $values = $form_state['values'];
+  // $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $module_name);
+  $new_dirname = BACKDROP_ROOT . '/' . $values['type'] . 's/' . check_plain($project_name);
+
+  // Create an output directory we can write to.
+  if (!is_dir($new_dirname)) {
+    file_prepare_directory($new_dirname, FILE_CREATE_DIRECTORY);
+  }
+  else {
+    backdrop_set_message(t('The subtheme directory already exists.'), 'error');
+    return FALSE;
+  }
+
+  // Create CSS and JS folders.
+  if (!empty($values['styles'])) {
+    foreach ($values['styles'] as $style) {
+      $pathinfo = pathinfo($style);
+      $path = $new_dirname . '/' . $pathinfo['dirname'];
+      file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+      file_put_contents($new_dirname . '/' . $style, '');
+    }
+  }
+  if (!empty($values['scripts'])) {
+    foreach ($values['scripts'] as $script) {
+      $pathinfo = pathinfo($script);
+      $path = $new_dirname . '/' . $pathinfo['dirname'];
+      file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+      file_put_contents($new_dirname . '/' . $script, '');
+    }
+  }
+  
+
+  // Build the info file.
+  $values['theme_name'] = $project_name;
+  $info_file_array = project_maker_build_info_file_array($values);
+
+  $info_file = project_maker_build_info_file($info_file_array);
+  $info_file_path = $new_dirname . '/' . $values['project_name'] . '.info';
+  file_put_contents($info_file_path, $info_file);
+
+  return TRUE;
+
+}
+
 
 /**
  * Converts files in a theme directory.
@@ -725,14 +667,29 @@ function project_maker_copy_dir($item) {
 /**
  * Build an info file content structure array.
  */
-function project_maker_build_info_file_array($themes, $values) {
-  $theme_name = $values['theme_name'];
-  $data = $themes[$theme_name]->info;
+function project_maker_build_info_file_array($values) {
+  if ($values['type'] == 'subtheme') {
+    $themes = system_rebuild_theme_data();
+    $theme_name = $values['theme_name'];
+    $data = $themes[$theme_name]->info;
+    $description = t('Subtheme of ') . $data['name'];
+  }
+  elseif ($values['type'] == 'theme') {
+    $description = t('Description');
+  }
+  elseif ($values['type'] == 'module') {
+    $description = t('Description');
+  }
+  if ($values['type'] == 'layout') {
+    $description = t('Description');
+  }
   $info_file_array['name'] = $values['name'];
-  $info_file_array['description'] = t('Subtheme of ') . $data['name'];
-  $info_file_array['type'] = 'theme';
+  $info_file_array['description'] = $description;
+  $info_file_array['type'] = $values['type'];
   $info_file_array['backdrop'] = '1.x';
-  $info_file_array['base theme'] = $theme_name;
+  if ($values['type'] == 'subtheme') {
+    $info_file_array['base theme'] = $theme_name;
+  }
   $info_file_array['newline1'] = 'newline';
 
   if (!empty($values['copy_color'])) {
