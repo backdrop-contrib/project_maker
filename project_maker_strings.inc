@@ -107,5 +107,16 @@ function {$replacestring}_enable() {
 
 EOD;
 
+$strings['theme_settings'] = <<<EOD
+<?php
+/**
+ * @file
+ * theme-settings.php
+ *
+ * Theme settings file for $replacestring.
+ */
+
+EOD;
+
   return $strings[$string] . "\r\n";
 }

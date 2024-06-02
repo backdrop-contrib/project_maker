@@ -301,7 +301,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
       '#parent' => 'template_list',
       '#description' => t('Select template files to create now, or you can add them manually later.'),
     );
-    $form['base_theme_wrapper']['copy_theme_settings_php'] = array(
+    $form['base_theme_wrapper']['create_theme_settings_php'] = array(
       '#type' => 'checkbox',
       '#title' => t('Create blank theme-settings.php'),
       '#description' => t('Useful if you plan to include any custom settings for your theme.'),
@@ -632,6 +632,92 @@ function project_maker_process_module_data($values, $new_dirname) {
  * Converts files in a theme directory.
  */
 function project_maker_process_theme_data($values, $new_dirname) {
+  $project_name = $values['project_name'];
+  // If this is creating a subtheme, things get mostly copied.
+  if ($values['base_theme'] !== 'new') {
+    // Copy the favicon, logo, theme-settings.php
+    $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $values['theme_name']);
+    $allowed_filenames = array(
+      'favicon.ico',
+      'logo.png',
+      'screenshot.png',
+    );
+    if (!empty($values['copy_settings'])) {
+      $allowed_filenames[] = 'theme-settings.php';
+    }
+      
+    foreach ($allowed_filenames as $filename) {
+      if (file_exists($dirname . '/' . $filename)) {
+        copy($dirname . '/' . $filename, $new_dirname . '/' . $filename);
+        project_maker_convert_file($new_dirname . '/' . $filename, $values);
+      }
+    }
+
+    // Create a color directory if needed.
+    if (!empty($values['copy_color'])) {
+      $copy_color_item = array(
+        'old_dir' => $dirname . '/color',
+        'new_dir' => $new_dirname . '/color',
+      );
+      project_maker_copy_dir($copy_color_item);
+    }
+
+    // Create a templates directory if needed.
+    // Copy over the tpl.php files.
+    if (isset($values['template_list'])) {
+      $template_list = array_filter($values['template_list']);
+      if (!empty($template_list)) {
+        $template_directory = $new_dirname . '/templates';
+        file_prepare_directory($template_directory, FILE_CREATE_DIRECTORY);
+        foreach ($template_list as $template_path) {
+          $file = basename($template_path);         // $file is set to "index.php"
+          $dest = $template_directory . '/' . $file;
+          $source = BACKDROP_ROOT . '/' . $template_path;
+          copy($source, $dest);
+        }
+      }
+    }
+  }
+  // Otherwise we're mostly creating files from scratch.
+  else {
+    $template_list = array_filter($values['template_files']);
+    // Hardcode core template file locations.
+    $template_locations = array(
+      'node' => backdrop_get_path('module', 'node') . '/templates/node.tpl.php',
+      'comment' => backdrop_get_path('module', 'comment') . '/templates/comment.tpl.php',
+      'header' => backdrop_get_path('module', 'system') . '/templates/header.tpl.php',
+      'maintenance-page' => backdrop_get_path('module', 'system') . '/templates/maintenance-page.tpl.php',
+    );
+    if (!empty($template_list)) {
+      $template_directory = $new_dirname . '/templates';
+      file_prepare_directory($template_directory, FILE_CREATE_DIRECTORY);
+      foreach ($template_list as $template) {
+        $file = basename($template_locations[$template]);
+        $dest = $template_directory . '/' . $file;
+        $source = $template_locations[$template];
+        copy($source, $dest);
+      }
+    }
+    // Create blank theme-settings.php.
+    if ($values['create_theme_settings_php']) {
+      module_load_include('inc', 'project_maker', 'project_maker_strings');
+      $string = project_maker_replacement_strings('theme_settings', $project_name);
+      $theme_settings_file = 'theme-settings.php';
+      file_put_contents($new_dirname . '/' . $theme_settings_file, $string);
+    }
+  }
+
+  // Modify the template.php code.
+  if (!empty($values['copy_template_php'])) {
+    $template_php_content = "<?php\n";
+    $template_php_content .= "/**\n";
+    $template_php_content .= " * @file\n";
+    $template_php_content .= " * " . $values['name'] . " preprocess functions and theme function overrides.\n";
+    $template_php_content .= " */\n";
+
+    file_put_contents($new_dirname . '/template.php', $template_php_content);
+  }
+
 }
 
 /**
@@ -747,10 +833,11 @@ function project_maker_process_theme_directory($form_state) {
  * @param string $filename
  *   The new name of the file to convert.
  */
-function project_maker_convert_file($filename, $form_state) {
+function project_maker_convert_file($filename, $values) {
   if (!file_exists($filename)) {
     return FALSE;
   }
+  $themes = list_themes();
 
   $extension = pathinfo($filename, PATHINFO_EXTENSION);
 
@@ -760,8 +847,8 @@ function project_maker_convert_file($filename, $form_state) {
 
   if ($extension != 'js') {
     // String replacement of the base theme human readable name.
-    $theme_full_name = $form_state['themes'][$form_state['theme_name']]->info['name'];
-    $new = str_replace($theme_full_name, $form_state['values']['name'], $new);
+    $theme_full_name = $themes[$values['project_name']]->info['name'];
+    $new = str_replace($theme_full_name, $values['name'], $new);
     // String replacement of the base theme machine name.
     $new = str_replace($form_state['theme_name'], $form_state['values']['subtheme_name'], $new);
   }
