@@ -84,25 +84,31 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
     ),
     '#description' => t('Module machine name'),
   );
+  $form['project_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Project description'),
+    '#description' => t('Project description.'),
+    '#required' => TRUE,
+  );
   $form['base_theme_wrapper']['include_common_hooks'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Implement Hooks'),
     '#options' => array(
       'hook_menu' => t('hook_menu()'),
       'hook_permission' => t('hook_permission()'),
-      'hook_theme' => t('hook_theme()'),
-      'hook_autoload_info' => t('hook_autoload_info()'),
-      'hook_config_info' => t('hook_config_info()'),
-      'hook_admin_paths' => t('hook_admin_paths()'),
-      'hook_block_configure' => t('hook_block_configure()'),
-      'hook_block_info' => t('hook_block_info()'),
-      'hook_block_save' => t('hook_block_save()'),
-      'hook_block_view' => t('hook_block_view()'),
-      'hook_cron' => t('hook_cron()'),
-      'hook_entity_info' => t('hook_entity_info()'),
-      'hook_form_FORM_ID_alter' => t('hook_form_FORM_ID_alter()'),
-      'hook_form_alter' => t('hook_form_alter()'),
-      'hook_library_info' => t('hook_library_info()'),
+      // 'hook_theme' => t('hook_theme()'),
+      // 'hook_autoload_info' => t('hook_autoload_info()'),
+      // 'hook_config_info' => t('hook_config_info()'),
+      // 'hook_admin_paths' => t('hook_admin_paths()'),
+      // 'hook_block_configure' => t('hook_block_configure()'),
+      // 'hook_block_info' => t('hook_block_info()'),
+      // 'hook_block_save' => t('hook_block_save()'),
+      // 'hook_block_view' => t('hook_block_view()'),
+      // 'hook_cron' => t('hook_cron()'),
+      // 'hook_entity_info' => t('hook_entity_info()'),
+      // 'hook_form_FORM_ID_alter' => t('hook_form_FORM_ID_alter()'),
+      // 'hook_form_alter' => t('hook_form_alter()'),
+      // 'hook_library_info' => t('hook_library_info()'),
     ),
     '#description' => t('Choose additional module files to be created.'),
   );
@@ -114,11 +120,11 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
       'install' => t('Install file'),
       'admin' => t('Admin file'),
       'theme' => t('Theme file'),
-      'config' => t('Config file'),
+      // 'config' => t('Config file'),
       'theme' => t('Theme file'),
       'js' => t('Javascript (js) file'),
       'css' => t('CSS file'),
-      'test' => t('Test file'),
+      // 'test' => t('Test file'),
     ),
     '#description' => t('Choose additional module files to be created.'),
   );
@@ -127,10 +133,10 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
     '#title' => t('Implement Hooks in Install file'),
     '#options' => array(
       'hook_enable' => t('hook_enable()'),
-      'hook_disable' => t('hook_disable()'),
-      'hook_install' => t('hook_install()'),
-      'hook_schema' => t('hook_schema()'),
-      'hook_uninstall' => t('hook_uninstall()'),
+      // 'hook_disable' => t('hook_disable()'),
+      // 'hook_install' => t('hook_install()'),
+      // 'hook_schema' => t('hook_schema()'),
+      // 'hook_uninstall' => t('hook_uninstall()'),
     ),
     '#description' => t('Choose additional module files to be created.'),
   );
@@ -218,6 +224,12 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
       'source' => array('name'),
     ),
     '#description' => t('Subtheme machine name'),
+  );
+  $form['project_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Project description'),
+    '#description' => t('Project description.'),
+    '#required' => TRUE,
   );
   if ($hide_theme_selection) {
     $form['base_theme'] = array(
@@ -356,6 +368,12 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
       'source' => array('name'),
     ),
     '#description' => t('Subtheme machine name'),
+  );
+  $form['project_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Project description'),
+    '#description' => t('Project description.'),
+    '#required' => TRUE,
   );
 
 
@@ -531,10 +549,85 @@ function project_maker_process_project_directory($form_state, $project_name) {
     }
   }
 
+  switch ($values['type']) {
+    case 'module':
+      $success = project_maker_process_module_data($values, $new_dirname);
+      break;
+
+    case 'theme':
+      $success = project_maker_process_theme_data($values, $new_dirname);
+      break;
+
+    case 'layout':
+      $success = project_maker_process_layout_data($values, $new_dirname);
+      break;
+  }
+
   return TRUE;
 
 }
 
+/**
+ * Converts files in a theme directory.
+ */
+function project_maker_process_module_data($values, $new_dirname) {
+  module_load_include('inc', 'project_maker', 'project_maker_strings');
+  $project_name = $values['project_name'];
+
+  // Create an install file.
+  if ($values['include_options']['install']) {
+    $string = project_maker_replacement_strings('install', $project_name);
+    if ($values['include_install_hooks']['hook_enable']) {
+      $string .= project_maker_replacement_strings('hook_enable', $project_name);
+    }
+    $install_file = $project_name . '.install';
+    file_put_contents($new_dirname . '/' . $install_file, $string);
+  }
+
+  // Create an admin.inc file.
+  if ($values['include_options']['admin']) {
+    $string = project_maker_replacement_strings('admin', $project_name);
+    $admin_file = $project_name . '.admin.inc';
+    file_put_contents($new_dirname . '/' . $admin_file, $string);
+  }
+
+  // Create an theme.inc file.
+  if ($values['include_options']['theme']) {
+    $string = project_maker_replacement_strings('theme', $project_name);
+    $theme_file = $project_name . '.theme.inc';
+    file_put_contents($new_dirname . '/' . $theme_file, $string);
+  }
+
+  // Create a JS file.
+  if ($values['include_options']['js']) {
+    $string = project_maker_replacement_strings('js', $project_name);
+    $js_file = $project_name . '.js';
+    $path = $new_dirname . '/js';
+    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+    file_put_contents($path . '/' . $js_file, $string);
+  }
+
+  // Create a CSS file.
+  if ($values['include_options']['css']) {
+    $string = project_maker_replacement_strings('css', $project_name);
+    $css_file = $project_name . '.css';
+    $path = $new_dirname . '/css';
+    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+    file_put_contents($path . '/' . $css_file, $string);
+  }
+}
+
+/**
+ * Converts files in a theme directory.
+ */
+function project_maker_process_theme_data($values, $new_dirname) {
+}
+
+/**
+ * Converts files in a theme directory.
+ */
+function project_maker_process_layout_data($values, $new_dirname) {
+}
 
 /**
  * Converts files in a theme directory.
