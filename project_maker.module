@@ -574,6 +574,17 @@ function project_maker_process_module_data($values, $new_dirname) {
   module_load_include('inc', 'project_maker', 'project_maker_strings');
   $project_name = $values['project_name'];
 
+  // Create a module file.
+  $string = project_maker_replacement_strings('module', $values['project_description']);
+  if ($values['include_common_hooks']['hook_menu']) {
+    $string .= project_maker_replacement_strings('hook_menu', $project_name);
+  }
+  if ($values['include_common_hooks']['hook_permission']) {
+    $string .= project_maker_replacement_strings('hook_permission', $project_name);
+  }
+  $module_file = $project_name . '.module';
+  file_put_contents($new_dirname . '/' . $module_file, $string);
+
   // Create an install file.
   if ($values['include_options']['install']) {
     $string = project_maker_replacement_strings('install', $project_name);

@@ -13,6 +13,15 @@
  */
 function project_maker_replacement_strings($string, $replacestring) {
 $strings = array();
+$strings['module'] = <<<EOD
+<?php
+/**
+ * @file
+ * $replacestring.
+ */
+
+EOD;
+
 $strings['install'] = <<<EOD
 <?php
 /**
