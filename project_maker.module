@@ -377,7 +377,6 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
 
 
   $templates = layout_get_layout_template_info();
-  dpm($templates);
   $template_list = array();
   $template_list['blank'] = t('Blank');
   foreach ($templates as $key => $list) {
@@ -435,7 +434,6 @@ function project_maker_project_exists($theme_name) {
  * Validation handler for the subtheme creation form.
  */
 function project_maker_create_module_form_validate($form, &$form_state) {
-  dpm($form_state['values']);
   if ($form_state['values']['include_options']['css']) {
     $form_state['values']['styles'][] = 'css/' . $form_state['values']['project_name'] . '.css';
   }
@@ -485,7 +483,6 @@ function project_maker_create_theme_form_validate($form, &$form_state) {
     }
     $form_state['values']['scripts'] = $scripts;
   }
-  dpm($form_state['values']);
 }
 
 /**
