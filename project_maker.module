@@ -378,6 +378,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
 
 
   $templates = layout_get_layout_template_info();
+  dpm($templates);
   $template_list = array();
   $template_list['blank'] = t('Blank');
   foreach ($templates as $key => $list) {
@@ -388,7 +389,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
 
   $form['#attached']['css'][] = backdrop_get_path('module', 'layout') . '/css/layout.admin.css';
   $form['base_theme_wrapper']['template_list'] = array(
-    '#type' => 'checkboxes',
+    '#type' => 'radios',
     '#options' => $template_list,
     '#title' => t('Copy template files'),
     '#attributes' => array('class' => array('layout-list')),
@@ -659,7 +660,7 @@ function project_maker_process_theme_data($values, $new_dirname) {
         'old_dir' => $dirname . '/color',
         'new_dir' => $new_dirname . '/color',
       );
-      project_maker_copy_dir($copy_color_item);
+      project_maker_copy_dir($copy_color_item, $values);
     }
 
     // Create a templates directory if needed.
@@ -724,6 +725,17 @@ function project_maker_process_theme_data($values, $new_dirname) {
  * Converts files in a theme directory.
  */
 function project_maker_process_layout_data($values, $new_dirname) {
+  if ($values['template_list'] === 'blank') {
+  }
+  else {
+    $copy_color_item = array(
+      'old_dir' => backdrop_get_path('layout', $values['template_list']),
+      'new_dir' => $new_dirname,
+    );
+    project_maker_copy_dir($copy_color_item, $values);
+  }
+  dpm($values);
+  
 }
 
 /**
@@ -766,7 +778,7 @@ function project_maker_process_theme_directory($form_state) {
       'old_dir' => $dirname . '/color',
       'new_dir' => $new_dirname . '/color',
     );
-    project_maker_copy_dir($copy_color_item);
+    project_maker_copy_dir($copy_color_item, $values);
   }
 
   // Create a templates directory if needed.
@@ -837,7 +849,6 @@ function project_maker_convert_file($filename, $values) {
   if (!file_exists($filename)) {
     return FALSE;
   }
-  $themes = list_themes();
 
   $extension = pathinfo($filename, PATHINFO_EXTENSION);
 
@@ -846,11 +857,21 @@ function project_maker_convert_file($filename, $values) {
   $new = $cur;
 
   if ($extension != 'js') {
-    // String replacement of the base theme human readable name.
-    $theme_full_name = $themes[$values['project_name']]->info['name'];
-    $new = str_replace($theme_full_name, $values['name'], $new);
-    // String replacement of the base theme machine name.
-    $new = str_replace($form_state['theme_name'], $form_state['values']['subtheme_name'], $new);
+    if ($values['type'] === 'layout') {
+      $template_info = layout_get_layout_template_info($values['template_list']);
+      // String replacement of the template machine name.
+      $new = str_replace($values['template_list'], $values['project_name'], $new);
+      // String replacement of the template human readable name.
+      $new = str_replace($template_info['title'], $values['name'], $new);
+    }
+    elseif ($values['type'] === 'theme') {
+      $themes = list_themes();
+      // String replacement of the base theme human readable name.
+      $theme_full_name = $themes[$values['project_name']]->info['name'];
+      $new = str_replace($theme_full_name, $values['name'], $new);
+      // String replacement of the base theme machine name.
+      $new = str_replace($values['theme_name'], $values['project_name'], $new);
+    }
   }
 
   // Write the new file.
@@ -868,7 +889,7 @@ function project_maker_convert_file($filename, $values) {
  * @param array $item
  *   Array of a directory containing the files to convert.
  */
-function project_maker_copy_dir($item) {
+function project_maker_copy_dir($item, $values) {
   $dirname = $item['old_dir'];
   $new_dirname = $item['new_dir'];
 
@@ -877,9 +898,9 @@ function project_maker_copy_dir($item) {
     mkdir($new_dirname);
     chmod($new_dirname, 0757);
   }
-  else {
-    backdrop_set_message(t('Unable to copy directory.'), 'error');
-  }
+  // else {
+    // backdrop_set_message(t('Unable to copy directory.'), 'error');
+  // }
 
   static $ignore = array(/*'.', '..', '.bzr', '.git', '.svn',*/ 'CVS');
 
@@ -897,11 +918,13 @@ function project_maker_copy_dir($item) {
         'old_dir' => $dirname . '/' . $filename,
         'new_dir' => $new_dirname . '/' . $filename,
       );
-      project_maker_copy_dir($new_item);
+      project_maker_copy_dir($new_item, $values);
     }
     elseif (!is_dir($dirname . '/' . $filename)) {
-      copy($dirname . '/' . $filename, $new_dirname . '/' . $filename);
-      project_maker_convert_file($new_dirname . '/' . $filename);
+      $theme_full_name = $values['template_list'];
+      $new_filename = str_replace($theme_full_name, $values['project_name'], $filename);
+      copy($dirname . '/' . $filename, $new_dirname . '/' . $new_filename);
+      project_maker_convert_file($new_dirname . '/' . $new_filename, $values);
     }
   }
 }
