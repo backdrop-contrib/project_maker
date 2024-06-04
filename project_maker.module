@@ -176,12 +176,12 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
     $options[$theme_name] = $theme_info->info['name'];
   }
 
-  $form_state['theme_name'] = 'new';
+  $base_theme = 'new';
   if (isset($form_state['values']['base_theme'])) {
-    $form_state['theme_name'] = $form_state['values']['base_theme'];
+    $base_theme = $form_state['values']['base_theme'];
   }
   elseif ($theme) {
-    $form_state['theme_name'] = $theme;
+    $base_theme = $theme;
     $page_title = t('Create subtheme from @theme', array('@theme' => $options[$theme]));
     $hide_theme_selection = TRUE;
   }
@@ -189,9 +189,8 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
 
   
   $selected_theme_name_string = '';
-  if ($form_state['theme_name']!= 'new') {
-    $form_state['theme_name'] = $form_state['values']['base_theme'];
-    $selected_theme = $themes[$form_state['theme_name']];
+  if ($base_theme!= 'new') {
+    $selected_theme = $themes[$base_theme];
     $selected_theme_name = $selected_theme->info['name'];
     $selected_theme_name_string = t(' from @selected_theme_name', array('@selected_theme_name' => $selected_theme_name));
   }
@@ -234,7 +233,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   if ($hide_theme_selection) {
     $form['base_theme'] = array(
       '#type' => 'hidden',
-      '#value' => $form_state['theme_name'],
+      '#value' => $base_theme,
     );
   }
   else {
@@ -243,7 +242,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
       '#title' => t('Base theme'),
       '#options' => $options,
       '#parents' => array('base_theme'),
-      '#default_value' => $form_state['theme_name'],
+      '#default_value' => $base_theme,
       '#ajax' => array(
         'callback' => 'base_theme_wrapper_change_callback',
         'wrapper' => 'base_theme_wrapper',
@@ -256,19 +255,19 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
   $form['base_theme_wrapper'] = array(
     '#type' => 'container',
     '#id' => 'base_theme_wrapper',
-   // '#access' => $form_state['theme_name'],
+   // '#access' => $base_theme,
     '#attributes' => array(
       'class' => array('base-theme-wrapper clearfix'),
     ),
   );
-  if ($form_state['theme_name'] !== 'new' && theme_has_color_support($form_state['theme_name'])) {
+  if ($base_theme !== 'new' && theme_has_color_support($base_theme)) {
     $form['base_theme_wrapper']['copy_color'] = array(
     '#type' => 'checkbox',
     '#title' => t('Copy color settings') . $selected_theme_name_string,
     '#description' => t('Include this if you plan to modify the color module settings.'),
     );
   }
-  if (!empty($themes[$form_state['theme_name']]->info['settings'])) {
+  if (!empty($themes[$base_theme]->info['settings'])) {
     $form['base_theme_wrapper']['copy_settings'] = array(
     '#type' => 'checkbox',
     '#parent' => 'settings',
@@ -276,7 +275,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
     );
   }
 
-  $template_list = project_maker_theme_templates($form_state['theme_name']);
+  $template_list = project_maker_theme_templates($base_theme);
 
   if (!empty($template_list)) {
     $form['base_theme_wrapper']['template_list'] = array(
@@ -288,7 +287,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
     );
   }
 
-  if ($form_state['theme_name'] === 'new') {
+  if ($base_theme === 'new') {
     $form['base_theme_wrapper']['template_files'] = array(
       '#type' => 'checkboxes',
       '#options' => array(
@@ -747,9 +746,9 @@ function project_maker_process_layout_data($values, $new_dirname) {
  * Converts files in a theme directory.
  */
 function project_maker_process_theme_directory($form_state) {
-  $theme_name = check_plain($form_state['theme_name']);
+  $base_theme = check_plain($form_state['base_theme']);
   $values = $form_state['values'];
-  $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $form_state['theme_name']);
+  $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $form_state['base_theme']);
   $new_dirname = BACKDROP_ROOT . '/themes/' . check_plain($values['subtheme_name']);
 
   // Create an output directory we can write to.
@@ -833,7 +832,7 @@ function project_maker_process_theme_directory($form_state) {
 
   // Build the info file.
   $themes = system_rebuild_theme_data();
-  $values['theme_name'] = $theme_name;
+  $values['base_theme'] = $base_theme;
   $info_file_array = project_maker_build_info_file_array($themes, $values);
 
   $info_file = project_maker_build_info_file($info_file_array);
@@ -875,7 +874,7 @@ function project_maker_convert_file($filename, $values) {
       $theme_full_name = $themes[$values['project_name']]->info['name'];
       $new = str_replace($theme_full_name, $values['name'], $new);
       // String replacement of the base theme machine name.
-      $new = str_replace($values['theme_name'], $values['project_name'], $new);
+      $new = str_replace($values['base_theme'], $values['project_name'], $new);
     }
   }
 
@@ -940,8 +939,8 @@ function project_maker_copy_dir($item, $values) {
 function project_maker_build_info_file_array($values) {
   if ($values['type'] == 'subtheme') {
     $themes = system_rebuild_theme_data();
-    $theme_name = $values['theme_name'];
-    $data = $themes[$theme_name]->info;
+    $base_theme = $values['base_theme'];
+    $data = $themes[$base_theme]->info;
     $description = t('Subtheme of ') . $data['name'];
   }
   elseif ($values['type'] == 'theme') {
@@ -958,7 +957,7 @@ function project_maker_build_info_file_array($values) {
   $info_file_array['type'] = $values['type'];
   $info_file_array['backdrop'] = '1.x';
   if ($values['type'] == 'subtheme') {
-    $info_file_array['base theme'] = $theme_name;
+    $info_file_array['base theme'] = $base_theme;
   }
   $info_file_array['newline1'] = 'newline';
 
@@ -1039,7 +1038,7 @@ function project_maker_system_themes_page_alter(&$theme_groups) {
           if (in_array($theme->name, $all_currently_available_themes)) {
             $theme_groups[$group][$key]->operations[] = array(
               'title' => t('Create subtheme'),
-              'href' => 'admin/config/development/devel-project maker/' . $theme->name,
+              'href' => 'admin/config/development/project-maker/theme/' . $theme->name,
               'attributes' => array('title' => t('Create subtheme of @theme', array('@theme' => $theme->info['name']))),
             );
           }
