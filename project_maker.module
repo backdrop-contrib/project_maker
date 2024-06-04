@@ -395,6 +395,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
     '#attributes' => array('class' => array('layout-list')),
     '#description' => t('The template (*.tpl.php) files will be copied from the existing layout template selected.'),
   );
+  $form['base_theme_wrapper']['template_list']['blank']['#description'] = t('Creates an info file and a blank template file.');
 
 
   $form['actions'] = array('#type' => 'actions');
@@ -726,6 +727,10 @@ function project_maker_process_theme_data($values, $new_dirname) {
  */
 function project_maker_process_layout_data($values, $new_dirname) {
   if ($values['template_list'] === 'blank') {
+    module_load_include('inc', 'project_maker', 'project_maker_strings');
+    $string = project_maker_replacement_strings('blank_layout_template', $values['project_name']);
+    $blank_layout_template = 'layout--' . $values['project_name'] . '.tpl.php';
+    file_put_contents($new_dirname . '/' . $blank_layout_template, $string);
   }
   else {
     $copy_color_item = array(

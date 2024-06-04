@@ -118,5 +118,33 @@ $strings['theme_settings'] = <<<EOD
 
 EOD;
 
+$strings['blank_layout_template'] = <<<EOD
+<?php
+/**
+ * @file
+ * Template for the $replacestring layout.
+ *
+ * Variables:
+ * - \$title: The page title, for use in the actual HTML content.
+ * - \$messages: Status and error messages. Should be displayed prominently.
+ * - \$tabs: Tabs linking to any sub-pages beneath the current page
+ *   (e.g., the view and edit tabs when displaying a node.)
+ * - \$action_links: Array of actions local to the page, such as 'Add menu' on
+ *   the menu administration interface.
+ * - \$classes: Array of CSS classes to be added to the layout wrapper.
+ * - \$attributes: Array of additional HTML attributes to be added to the layout
+ *     wrapper. Flatten using backdrop_attributes().
+ * - \$content: An array of content, each item in the array is keyed to one
+ *   region of the layout. This layout supports the following sections:
+ */
+?>
+<div class="layout--$replacestring <?php print implode(' ', \$classes); ?>"<?php print backdrop_attributes(\$attributes); ?>>
+  <div id="skip-link">
+    <a href="#main-content" class="element-invisible element-focusable"><?php print t('Skip to main content'); ?></a>
+  </div>
+
+</div><!-- /.layout--$replacestring -->
+EOD;
+
   return $strings[$string] . "\r\n";
 }
