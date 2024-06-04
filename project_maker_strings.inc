@@ -11,7 +11,7 @@
 /**
  * Converts files in a theme directory.
  */
-function project_maker_replacement_strings($string, $replacestring) {
+function project_maker_replacement_strings($string, $replacestring, $replacestring2 = '', $replacestring3 = '') {
 $strings = array();
 $strings['module'] = <<<EOD
 <?php
@@ -122,7 +122,7 @@ $strings['blank_layout_template'] = <<<EOD
 <?php
 /**
  * @file
- * Template for the $replacestring layout.
+ * Template for the $replacestring2 layout.
  *
  * Variables:
  * - \$title: The page title, for use in the actual HTML content.

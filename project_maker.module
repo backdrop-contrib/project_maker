@@ -575,6 +575,7 @@ function project_maker_process_project_directory($form_state, $project_name) {
 function project_maker_process_module_data($values, $new_dirname) {
   module_load_include('inc', 'project_maker', 'project_maker_strings');
   $project_name = $values['project_name'];
+  $project_human_name = $values['name'];
 
   // Create a module file.
   $string = project_maker_replacement_strings('module', $values['project_description']);
@@ -589,7 +590,7 @@ function project_maker_process_module_data($values, $new_dirname) {
 
   // Create an install file.
   if ($values['include_options']['install']) {
-    $string = project_maker_replacement_strings('install', $project_name);
+    $string = project_maker_replacement_strings('install', $project_human_name);
     if ($values['include_install_hooks']['hook_enable']) {
       $string .= project_maker_replacement_strings('hook_enable', $project_name);
     }
@@ -599,21 +600,21 @@ function project_maker_process_module_data($values, $new_dirname) {
 
   // Create an admin.inc file.
   if ($values['include_options']['admin']) {
-    $string = project_maker_replacement_strings('admin', $project_name);
+    $string = project_maker_replacement_strings('admin', $project_human_name);
     $admin_file = $project_name . '.admin.inc';
     file_put_contents($new_dirname . '/' . $admin_file, $string);
   }
 
   // Create an theme.inc file.
   if ($values['include_options']['theme']) {
-    $string = project_maker_replacement_strings('theme', $project_name);
+    $string = project_maker_replacement_strings('theme', $project_human_name);
     $theme_file = $project_name . '.theme.inc';
     file_put_contents($new_dirname . '/' . $theme_file, $string);
   }
 
   // Create a JS file.
   if ($values['include_options']['js']) {
-    $string = project_maker_replacement_strings('js', $project_name);
+    $string = project_maker_replacement_strings('js', $project_human_name);
     $js_file = $project_name . '.js';
     $path = $new_dirname . '/js';
     file_prepare_directory($path, FILE_CREATE_DIRECTORY);
@@ -622,7 +623,7 @@ function project_maker_process_module_data($values, $new_dirname) {
 
   // Create a CSS file.
   if ($values['include_options']['css']) {
-    $string = project_maker_replacement_strings('css', $project_name);
+    $string = project_maker_replacement_strings('css', $project_human_name);
     $css_file = $project_name . '.css';
     $path = $new_dirname . '/css';
     file_prepare_directory($path, FILE_CREATE_DIRECTORY);
@@ -703,7 +704,7 @@ function project_maker_process_theme_data($values, $new_dirname) {
     // Create blank theme-settings.php.
     if ($values['create_theme_settings_php']) {
       module_load_include('inc', 'project_maker', 'project_maker_strings');
-      $string = project_maker_replacement_strings('theme_settings', $project_name);
+      $string = project_maker_replacement_strings('theme_settings', $values['name']);
       $theme_settings_file = 'theme-settings.php';
       file_put_contents($new_dirname . '/' . $theme_settings_file, $string);
     }
@@ -728,7 +729,7 @@ function project_maker_process_theme_data($values, $new_dirname) {
 function project_maker_process_layout_data($values, $new_dirname) {
   if ($values['template_list'] === 'blank') {
     module_load_include('inc', 'project_maker', 'project_maker_strings');
-    $string = project_maker_replacement_strings('blank_layout_template', $values['project_name']);
+    $string = project_maker_replacement_strings('blank_layout_template', $values['project_name'], $values['name']);
     $blank_layout_template = 'layout--' . $values['project_name'] . '.tpl.php';
     file_put_contents($new_dirname . '/' . $blank_layout_template, $string);
   }
@@ -739,7 +740,6 @@ function project_maker_process_layout_data($values, $new_dirname) {
     );
     project_maker_copy_dir($copy_color_item, $values);
   }
-  dpm($values);
   
 }
 
