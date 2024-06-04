@@ -34,15 +34,15 @@ function project_maker_menu() {
   );
   $items['admin/config/development/project-maker/theme'] = array(
     'title' => 'Create theme',
-    'description' => 'Create project.',
+    'description' => 'Create theme or subtheme.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('project_maker_create_theme_form'),
     'access arguments' => array('administer project maker'),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/config/development/project-maker/layout'] = array(
-    'title' => 'Create layout',
-    'description' => 'Create project.',
+    'title' => 'Create layout template',
+    'description' => 'Create layout template.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('project_maker_create_layout_form'),
     'access arguments' => array('administer project maker'),
@@ -740,107 +740,6 @@ function project_maker_process_layout_data($values, $new_dirname) {
     project_maker_copy_dir($copy_color_item, $values);
   }
   
-}
-
-/**
- * Converts files in a theme directory.
- */
-function project_maker_process_theme_directory($form_state) {
-  $base_theme = check_plain($form_state['base_theme']);
-  $values = $form_state['values'];
-  $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $form_state['base_theme']);
-  $new_dirname = BACKDROP_ROOT . '/themes/' . check_plain($values['subtheme_name']);
-
-  // Create an output directory we can write to.
-  if (!is_dir($new_dirname)) {
-    file_prepare_directory($new_dirname, FILE_CREATE_DIRECTORY);
-  }
-  else {
-    backdrop_set_message(t('The subtheme directory already exists.'), 'error');
-    return FALSE;
-  }
-
-  // Copy the favicon, logo, theme-settings.php
-  $allowed_filenames = array(
-    'favicon.ico',
-    'logo.png',
-  );
-  if (!empty($values['copy_settings'])) {
-    $allowed_filenames[] = 'theme-settings.php';
-  }
-    
-  foreach ($allowed_filenames as $filename) {
-    if (file_exists($dirname . '/' . $filename)) {
-      copy($dirname . '/' . $filename, $new_dirname . '/' . $filename);
-      project_maker_convert_file($new_dirname . '/' . $filename, $form_state);
-    }
-  }
-
-  // Create a color directory if needed.
-  if (!empty($values['copy_color'])) {
-    $copy_color_item = array(
-      'old_dir' => $dirname . '/color',
-      'new_dir' => $new_dirname . '/color',
-    );
-    project_maker_copy_dir($copy_color_item, $values);
-  }
-
-  // Create a templates directory if needed.
-  // Copy over the tpl.php files.
-  if (isset($values['template_list'])) {
-    $template_list = array_filter($values['template_list']);
-    if (!empty($template_list)) {
-      $template_directory = $new_dirname . '/templates';
-      file_prepare_directory($template_directory, FILE_CREATE_DIRECTORY);
-      foreach ($template_list as $template_path) {
-        $file = basename($template_path);         // $file is set to "index.php"
-        $dest = $template_directory . '/' . $file;
-        $source = BACKDROP_ROOT . '/' . $template_path;
-        copy($source, $dest);
-      }
-    }
-  }
-
-  // Create CSS and JS folders.
-  if (!empty($values['styles'])) {
-    foreach ($values['styles'] as $style) {
-      $pathinfo = pathinfo($style);
-      $path = $new_dirname . '/' . $pathinfo['dirname'];
-      file_prepare_directory($path, FILE_CREATE_DIRECTORY);
-      file_put_contents($new_dirname . '/' . $style, '');
-    }
-  }
-  if (!empty($values['scripts'])) {
-    foreach ($values['scripts'] as $script) {
-      $pathinfo = pathinfo($script);
-      $path = $new_dirname . '/' . $pathinfo['dirname'];
-      file_prepare_directory($path, FILE_CREATE_DIRECTORY);
-      file_put_contents($new_dirname . '/' . $script, '');
-    }
-  }
-  
-  // Modify the template.php code.
-  if (!empty($values['copy_template_php'])) {
-    $template_php_content = "<?php\n";
-    $template_php_content .= "/**\n";
-    $template_php_content .= " * @file\n";
-    $template_php_content .= " * " . $values['name'] . " preprocess functions and theme function overrides.\n";
-    $template_php_content .= " */\n";
-
-    file_put_contents($new_dirname . '/template.php', $template_php_content);
-  }
-
-  // Build the info file.
-  $themes = system_rebuild_theme_data();
-  $values['base_theme'] = $base_theme;
-  $info_file_array = project_maker_build_info_file_array($themes, $values);
-
-  $info_file = project_maker_build_info_file($info_file_array);
-  $info_file_path = $new_dirname . '/' . $values['subtheme_name'] . '.info';
-  file_put_contents($info_file_path, $info_file);
-
-  return TRUE;
-
 }
 
 /**
