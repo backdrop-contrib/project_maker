@@ -207,14 +207,14 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
 
   $form['intro'] = array(
     '#type' => 'help',
-    '#markup' => t('This form automates the initial creation of a subtheme. A new folder will be created in your themes directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
+    '#markup' => t('This form automates the initial creation of a theme or subtheme. A new folder will be created in your themes directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
   );
 
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Theme name'),
     '#maxlength' => 64,
-    '#description' => t('Human-readable subtheme name.'),
+    '#description' => t('Human-readable theme name.'),
     '#required' => TRUE,
     '#id' => 'subtheme-name',
   );
@@ -225,7 +225,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
       'exists' => 'project_maker_project_exists',
       'source' => array('name'),
     ),
-    '#description' => t('Subtheme machine name'),
+    '#description' => t('Theme machine name'),
   );
   $form['project_description'] = array(
     '#type' => 'textfield',
@@ -329,11 +329,11 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
     '#rows' => 3,
   );
   $form['actions'] = array('#type' => 'actions');
-  $form['actions']['create_subtheme'] = array(
+  $form['actions']['create_theme'] = array(
     '#type' => 'submit',
     '#validate' => array('project_maker_create_theme_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
-    '#value' => t('Create subtheme'),
+    '#value' => t('Create Theme'),
   );
 
   return $form;
@@ -351,7 +351,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
 
   $form['intro'] = array(
     '#type' => 'help',
-    '#markup' => t('This form automates the initial creation of a layout template package. A new folder will be created in your layouts directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a subtheme</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-sub-themes'))),
+    '#markup' => t('This form automates the initial creation of a layout template package. A new folder will be created in your layouts directory, with all the necessary files (according to selected options below). For more information, see the documentation on <a href="@link">creating a layout template</a>.', array('@link' => url('https://docs.backdropcms.org/documentation/creating-layout-templates'))),
   );
 
   $form['name'] = array(
@@ -369,7 +369,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
       'exists' => 'project_maker_project_exists',
       'source' => array('name'),
     ),
-    '#description' => t('Subtheme machine name'),
+    '#description' => t('Layout template machine name'),
   );
   $form['project_description'] = array(
     '#type' => 'textfield',
@@ -400,7 +400,7 @@ function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
 
 
   $form['actions'] = array('#type' => 'actions');
-  $form['actions']['create_subtheme'] = array(
+  $form['actions']['create_layout_template'] = array(
     '#type' => 'submit',
     '#validate' => array('project_maker_create_layout_form_validate'),
     '#submit' => array('project_maker_create_project_form_submit'),
@@ -434,7 +434,7 @@ function project_maker_project_exists($theme_name) {
 }
 
 /**
- * Validation handler for the subtheme creation form.
+ * Validation handler for the module creation form.
  */
 function project_maker_create_module_form_validate($form, &$form_state) {
   if ($form_state['values']['include_options']['css']) {
@@ -446,13 +446,13 @@ function project_maker_create_module_form_validate($form, &$form_state) {
 }
 
 /**
- * Validation handler for the subtheme creation form.
+ * Validation handler for the layout template creation form.
  */
 function project_maker_create_layout_form_validate($form, &$form_state) {
 }
 
 /**
- * Validation handler for the subtheme creation form.
+ * Validation handler for the theme and subtheme creation form.
  */
 function project_maker_create_theme_form_validate($form, &$form_state) {
   // @Todo: Need sanitizing?
@@ -489,22 +489,22 @@ function project_maker_create_theme_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for the subtheme creation form.
+ * Submit handler for the project creation forms.
  */
 function project_maker_create_project_form_submit($form, &$form_state) {
   $module_name = check_plain($form_state['values']['project_name']);
   $success = project_maker_process_project_directory($form_state, $module_name);
   if ($success) {
-    backdrop_set_message(t('Subtheme %subtheme was created successfully.', array('%subtheme' => $form_state['values']['name'])));
+    backdrop_set_message(t('Project %project was created successfully.', array('%project' => $form_state['values']['name'])));
     // $form_state['redirect'] = 'admin/appearance';
   }
   else {
-    backdrop_set_message(t('Subtheme creation failed to complete.'), 'error');
+    backdrop_set_message(t('Project creation failed to complete.'), 'error');
   }
 }
 
 /**
- * Converts files in a theme directory.
+ * Converts files in a project directory.
  */
 function project_maker_process_project_directory($form_state, $project_name) {
   $values = $form_state['values'];
@@ -516,7 +516,7 @@ function project_maker_process_project_directory($form_state, $project_name) {
     file_prepare_directory($new_dirname, FILE_CREATE_DIRECTORY);
   }
   else {
-    backdrop_set_message(t('The subtheme directory already exists.'), 'error');
+    backdrop_set_message(t('The project directory already exists.'), 'error');
     return FALSE;
   }
 
@@ -569,7 +569,7 @@ function project_maker_process_project_directory($form_state, $project_name) {
 }
 
 /**
- * Converts files in a theme directory.
+ * Converts files in a module directory.
  */
 function project_maker_process_module_data($values, $new_dirname) {
   module_load_include('inc', 'project_maker', 'project_maker_strings');
@@ -739,7 +739,7 @@ function project_maker_process_theme_data($values, $new_dirname) {
 }
 
 /**
- * Converts files in a theme directory.
+ * Converts files in a layout template directory.
  */
 function project_maker_process_layout_data($values, $new_dirname) {
   if ($values['template_list'] === 'blank') {
