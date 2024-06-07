@@ -654,7 +654,7 @@ function project_maker_process_theme_data($values, $new_dirname) {
   // If this is creating a subtheme, things get mostly copied.
   if ($values['base_theme'] !== 'new') {
     // Copy the favicon, logo, theme-settings.php
-    $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $values['theme_name']);
+    $dirname = BACKDROP_ROOT . '/' . backdrop_get_path('theme', $values['base_theme']);
     $allowed_filenames = array(
       'favicon.ico',
       'logo.png',
@@ -786,7 +786,7 @@ function project_maker_convert_file($filename, $values) {
     elseif ($values['type'] === 'theme') {
       $themes = list_themes();
       // String replacement of the base theme human readable name.
-      $theme_full_name = $themes[$values['project_name']]->info['name'];
+      $theme_full_name = $themes[$values['base_theme']]->info['name'];
       $new = str_replace($theme_full_name, $values['name'], $new);
       // String replacement of the base theme machine name.
       $new = str_replace($values['base_theme'], $values['project_name'], $new);
@@ -809,6 +809,7 @@ function project_maker_convert_file($filename, $values) {
  *   Array of a directory containing the files to convert.
  */
 function project_maker_copy_dir($item, $values) {
+      dpm($item);
   $dirname = $item['old_dir'];
   $new_dirname = $item['new_dir'];
 
@@ -840,10 +841,16 @@ function project_maker_copy_dir($item, $values) {
       project_maker_copy_dir($new_item, $values);
     }
     elseif (!is_dir($dirname . '/' . $filename)) {
-      $theme_full_name = $values['template_list'];
-      $new_filename = str_replace($theme_full_name, $values['project_name'], $filename);
-      copy($dirname . '/' . $filename, $new_dirname . '/' . $new_filename);
-      project_maker_convert_file($new_dirname . '/' . $new_filename, $values);
+      if ($values['type'] === 'layout') {
+        $theme_full_name = $values['template_list'];
+        $new_filename = str_replace($theme_full_name, $values['project_name'], $filename);
+        copy($dirname . '/' . $filename, $new_dirname . '/' . $new_filename);
+        project_maker_convert_file($new_dirname . '/' . $new_filename, $values);
+      }
+      else {
+        copy($dirname . '/' . $filename, $new_dirname . '/' . $filename);
+        project_maker_convert_file($new_dirname . '/' . $filename, $values);
+      }
     }
   }
 }
