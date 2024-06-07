@@ -65,14 +65,84 @@ $strings['css'] = <<<EOD
 
 EOD;
 
+$strings['hook_form'] = <<<EOD
+/**
+ * Form constructor for $replacestring.
+ *
+ * @ingroup forms
+ */
+function {$replacestring}_form(\$form, &\$form_state) {
+  \$form['$replacestring'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#default_value' => '',
+  );
+
+  \$form['actions'] = array('#type' => 'actions');
+  \$form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return \$form;
+}
+
+EOD;
+
+$strings['hook_form_validate'] = <<<EOD
+/**
+ * Form validation handler for {$replacestring}_form().
+ */
+function {$replacestring}_form_validate(\$form, &\$form_state) {
+}
+
+EOD;
+
+$strings['hook_form_submit'] = <<<EOD
+/**
+ * Form submit handler for {$replacestring}_form().
+ */
+function {$replacestring}_form_submit(\$form, &\$form_state) {
+}
+
+EOD;
+
+$strings['hook_menu_page'] = <<<EOD
+/**
+ * Menu callback.
+ */
+function {$replacestring}_page() {
+  return '$replacestring';
+}
+
+EOD;
+
 $strings['hook_menu'] = <<<EOD
 /**
  * Implements hook_menu().
  */
 function {$replacestring}_menu() {
   \$items['$replacestring'] = array(
-    'title' => 'Example Page',
-    'page callback' => 'example_page',
+    'title' => '{$replacestring} Page',
+    'page callback' => '{$replacestring}_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+
+  return \$items;
+}
+
+EOD;
+
+$strings['hook_menu_form'] = <<<EOD
+/**
+ * Implements hook_menu().
+ */
+function {$replacestring}_menu() {
+  \$items['{$replacestring}-form'] = array(
+    'title' => '$replacestring form',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('$replacestring}_form'),
     'access arguments' => array('access content'),
     'type' => MENU_SUGGESTED_ITEM,
   );

@@ -96,6 +96,9 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
     '#options' => array(
       'hook_menu' => t('hook_menu()'),
       'hook_permission' => t('hook_permission()'),
+      'hook_form' => t('hook_form()'),
+      'hook_form_validate' => t('hook_form_validate()'),
+      'hook_form_submit' => t('hook_form_submit()'),
       // 'hook_theme' => t('hook_theme()'),
       // 'hook_autoload_info' => t('hook_autoload_info()'),
       // 'hook_config_info' => t('hook_config_info()'),
@@ -575,11 +578,27 @@ function project_maker_process_module_data($values, $new_dirname) {
 
   // Create a module file.
   $string = project_maker_replacement_strings('module', $values['project_description']);
-  if ($values['include_common_hooks']['hook_menu']) {
+  if ($values['include_common_hooks']['hook_form']) {
+    $string .= project_maker_replacement_strings('hook_menu_form', $project_name);
+  }
+  elseif ($values['include_common_hooks']['hook_menu']) {
     $string .= project_maker_replacement_strings('hook_menu', $project_name);
   }
+
   if ($values['include_common_hooks']['hook_permission']) {
     $string .= project_maker_replacement_strings('hook_permission', $project_name);
+  }
+  if ($values['include_common_hooks']['hook_form']) {
+    $string .= project_maker_replacement_strings('hook_form', $project_name);
+  }
+  elseif ($values['include_common_hooks']['hook_menu']) {
+    $string .= project_maker_replacement_strings('hook_menu_page', $project_name);
+  }
+  if ($values['include_common_hooks']['hook_form_validate']) {
+    $string .= project_maker_replacement_strings('hook_form_validate', $project_name);
+  }
+  if ($values['include_common_hooks']['hook_form_submit']) {
+    $string .= project_maker_replacement_strings('hook_form_submit', $project_name);
   }
   $module_file = $project_name . '.module';
   file_put_contents($new_dirname . '/' . $module_file, $string);
