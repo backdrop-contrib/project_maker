@@ -343,7 +343,7 @@ function project_maker_create_theme_form($form, &$form_state, $theme = NULL) {
  * Form builder for the project maker creation form.
  */
 function project_maker_create_layout_form($form, &$form_state, $theme = NULL) {
-
+  backdrop_add_css(backdrop_get_path('module', 'project_maker') . '/project_maker.css');
   $form['type'] = array(
     '#type' => 'value',
     '#value' => 'layout',
@@ -600,6 +600,16 @@ function project_maker_process_module_data($values, $new_dirname) {
   if ($values['include_common_hooks']['hook_form_submit']) {
     $string .= project_maker_replacement_strings('hook_form_submit', $project_name);
   }
+
+  if (!empty($values['custom_functions'])) {
+    $custom_functions = explode("\n", $values['custom_functions']);
+    $custom_functions = array_map('trim', $custom_functions);
+    $custom_functions = array_filter($custom_functions, 'strlen');
+    foreach ($custom_functions as $custom_function) {
+      $string .= project_maker_replacement_strings('custom_function', $project_name, $custom_function);
+    }
+  }
+
   $module_file = $project_name . '.module';
   file_put_contents($new_dirname . '/' . $module_file, $string);
 

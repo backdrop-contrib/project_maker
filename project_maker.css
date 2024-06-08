@@ -1,0 +1,13 @@
+/**
+ * @file
+ * Styles for administration pages.
+ */
+
+.form-item.form-type-radio.form-item-template-list {
+  width: 250px;
+  margin-bottom: 1em;
+}
+.form-item-template-list .form-item input.form-radio {
+  margin-right: 14px;
+  float: left;
+}

@@ -216,5 +216,16 @@ $strings['blank_layout_template'] = <<<EOD
 </div><!-- /.layout--$replacestring -->
 EOD;
 
+$strings['custom_function'] = <<<EOD
+/**
+ * Custom function.
+ */
+function {$replacestring}_{$replacestring2}() {
+
+}
+
+EOD;
+
+
   return $strings[$string] . "\r\n";
 }
