@@ -1,16 +1,16 @@
-Devel Subthemer
+Project Maker
 =============
 
-Creates a subtheme from a given base theme.
+Creates a stub module, theme, subtheme, or layout via the UI.
 
 Installation and usage
 ------------
 
-1. Copy Devel Subthemer directory to your modules directory
+1. Copy to your modules directory
 2. Enable the module at the module administration page
-3. To create a subtheme, go to admin/config/development/devel-subthemer and
+3. To create a project, go to admin/config/development/project-maker and
 fill out the form as required.
-4. The subtheme will be created, then copied to the 'themes' directory.
+4. The project will be created, then copied to the appropriate directory.
 
 License
 -------
@@ -26,6 +26,6 @@ Current Maintainers
 Credits
 -------
 
-Based on code from Coder Module by 
+Some code inspired by Coder Module by 
 Jim Berry ("solotandem", http://drupal.org/user/240748)
 
