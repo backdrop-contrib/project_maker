@@ -819,7 +819,6 @@ function project_maker_convert_file($filename, $values) {
  *   Array of a directory containing the files to convert.
  */
 function project_maker_copy_dir($item, $values) {
-      dpm($item);
   $dirname = $item['old_dir'];
   $new_dirname = $item['new_dir'];
 
