@@ -101,7 +101,7 @@ function project_maker_create_module_form($form, &$form_state, $theme = NULL) {
       'hook_form_submit' => t('hook_form_submit()'),
       // 'hook_theme' => t('hook_theme()'),
       // 'hook_autoload_info' => t('hook_autoload_info()'),
-      // 'hook_config_info' => t('hook_config_info()'),
+      'hook_config_info' => t('hook_config_info()'),
       // 'hook_admin_paths' => t('hook_admin_paths()'),
       // 'hook_block_configure' => t('hook_block_configure()'),
       // 'hook_block_info' => t('hook_block_info()'),
@@ -600,6 +600,9 @@ function project_maker_process_module_data($values, $new_dirname) {
   if ($values['include_common_hooks']['hook_form_submit']) {
     $string .= project_maker_replacement_strings('hook_form_submit', $project_name);
   }
+  if ($values['include_common_hooks']['hook_config_info']) {
+    $string .= project_maker_replacement_strings('hook_config_info', $project_name, $project_human_name);
+  }
 
   if (!empty($values['custom_functions'])) {
     $custom_functions = explode("\n", $values['custom_functions']);
@@ -612,6 +615,15 @@ function project_maker_process_module_data($values, $new_dirname) {
 
   $module_file = $project_name . '.module';
   file_put_contents($new_dirname . '/' . $module_file, $string);
+
+  // Create an config folder and file.
+  if ($values['include_common_hooks']['hook_config_info']) {
+    $string = project_maker_replacement_strings('config_file', $project_name);
+    $config_file_folder_path = $new_dirname . '/config';
+    file_prepare_directory($config_file_folder_path, FILE_CREATE_DIRECTORY);
+    $config_file = $project_name . '.settings.json';
+    file_put_contents($config_file_folder_path . '/' . $config_file, $string);
+  }
 
   // Create an install file.
   if ($values['include_options']['install']) {

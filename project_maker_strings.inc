@@ -177,6 +177,27 @@ function {$replacestring}_enable() {
 
 EOD;
 
+$strings['hook_config_info'] = <<<EOD
+/**
+ * Implements hook_config_info().
+ */
+function {$replacestring}_config_info() {
+  \$prefixes['{$replacestring}.settings'] = array(
+    'label' => t('$replacestring2 settings'),
+    'group' => t('Configuration'),
+  );
+  return \$prefixes;
+}
+
+EOD;
+
+$strings['config_file'] = <<<EOD
+{
+    "_config_name": "$replacestring.settings"
+}
+
+EOD;
+
 $strings['theme_settings'] = <<<EOD
 <?php
 /**
