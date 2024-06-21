@@ -21,14 +21,15 @@ function project_maker_permission() {
  */
 function project_maker_menu() {
   $items['admin/config/development/project-maker'] = array(
-    'title' => 'Create module',
-    'description' => 'Create module.',
+    'title' => 'Create project',
+    'description' => 'Create project.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('project_maker_create_module_form'),
     'access arguments' => array('administer project maker'),
   );
   $items['admin/config/development/project-maker/module'] = array(
     'title' => 'Create module',
+    'description' => 'Create module.',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
